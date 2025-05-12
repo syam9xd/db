@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Serenity Spa</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="confirmation-container">
+        <header>
+            <h1>Booking Confirmed!</h1>
+            <p>Thank you for choosing Serenity Spa!</p>
+        </header>
+
+        <div class="confirmation-details">
+            <div id="booking-info"></div>
+        </div>
+
+        <footer>
+            <button><a href="index.html">Back to Home</a></button>
+        </footer>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // Retrieve pending bookings from localStorage
+            const pendingBookings = JSON.parse(localStorage.getItem("pendingBookings"));
+            const bookingInfo = document.getElementById("booking-info");
+
+            if (!pendingBookings || pendingBookings.length === 0) {
+                bookingInfo.innerHTML = '<p style="color: red;">No booking details found.</p>';
+                return;
+            }
+
+            // Display the most recent booking (last entry in the array)
+            const latestBooking = pendingBookings[pendingBookings.length - 1]; // Get the last booking
+
+            let html = `
+                <h2>${latestBooking.type === "group" ? "Group Booking" : "Individual Booking"}</h2>
+                <p><strong>Date:</strong> ${latestBooking.date}</p>
+                <p><strong>Time:</strong> ${latestBooking.time}</p>
+                <p><strong>Status:</strong> ${latestBooking.status}</p>
+                <p><strong>Created At:</strong> ${new Date(latestBooking.createdAt).toLocaleString()}</p>
+            `;
+
+            if (latestBooking.type === "group") {
+                html += `<h3>Services for Each Person:</h3>`;
+                latestBooking.services.forEach(service => {
+                    html += `
+                        <div class="service-item">
+                            <p><strong>Person ${service.person}:</strong> ${service.service} (${service.duration} minutes)</p>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="total">
+                        <p><strong>Total Price:</strong> ₱${latestBooking.total}</p>
+                    </div>
+                `;
+            } else {
+                html += `<h3>Services:</h3>`;
+                latestBooking.services.forEach(service => {
+                    html += `
+                        <div class="service-item">
+                            <p><strong>${service.service}</strong> (${service.duration} minutes)</p>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <div class="total">
+                        <p><strong>Total Price:</strong> ₱${latestBooking.total}</p>
+                    </div>
+                `;
+            }
+
+            bookingInfo.innerHTML = html;
+        };
+    </script>
+</body>
+</html>

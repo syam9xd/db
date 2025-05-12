@@ -1,0 +1,80 @@
+verify.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - Serenity Spa</title>
+    <link rel="stylesheet" href="verify.css">
+</head>
+<body>
+    <div class="verify-container">
+        <header class="verify-header">
+            <h1>Verify Your Email</h1>
+            <p>Please enter the verification code sent to your email</p>
+        </header>
+
+        <form id="verifyForm" class="verify-form" onsubmit="return handleVerification(event)">
+            <div class="form-group">
+                <label for="verificationCode">Verification Code</label>
+                <input type="text" id="verificationCode" name="verificationCode" 
+                       required maxlength="6" pattern="[0-9]{6}"
+                       title="Please enter the 6-digit verification code">
+                <small class="verification-hint">Enter the 6-digit code sent to your email</small>
+            </div>
+
+            <button type="submit" class="verify-submit-btn">Verify Email</button>
+            
+            <div class="resend-code">
+                <p>Didn't receive the code? <a href="#" onclick="resendCode(event)">Resend Code</a></p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function handleVerification(event) {
+            event.preventDefault();
+            
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            const enteredCode = document.getElementById('verificationCode').value;
+            
+            if (!userData) {
+                alert('Please register first!');
+                window.location.href = 'register.html';
+                return false;
+            }
+            
+            if (enteredCode === userData.verificationCode) {
+                userData.isVerified = true;
+                localStorage.setItem('userData', JSON.stringify(userData));
+                
+                alert('Email verified successfully! You can now book your appointment.');
+                
+                window.location.href = 'booking.html';
+            } else {
+                alert('Invalid verification code. Please try again.');
+            }
+            
+            return false;
+        }
+
+        function resendCode(event) {
+            event.preventDefault();
+            
+            const userData = JSON.parse(localStorage.getItem('userData'));
+            if (!userData) {
+                alert('Please register first!');
+                window.location.href = 'register.html';
+                return;
+            }
+            
+            const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+            userData.verificationCode = newCode;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            
+            alert(`Your new verification code is: ${newCode}\n\nPlease use this code to verify your email.`);
+        }
+    </script>
+</body>
+</html> 

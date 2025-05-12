@@ -1,0 +1,65 @@
+login.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - Serenity Spa</title>
+  <link rel="stylesheet" href="login.css" />
+</head>
+<body>
+    <header class="main-header">
+    <div class="logo">
+        <h1>Serenity Spa</h1>
+    </div>
+    <nav class="nav-links">
+        <a href="index.html">Back to Home</a>
+    </nav>
+</header>
+  <div class="login-container">
+    <div class="login-card">
+      <h1>Welcome to Serenity Spa</h1>
+      <p class="subtitle">Log in to your account</p>
+
+      <!-- Single Login Form -->
+      <form id="login-form" class="login-form">
+        <!-- User Role Selection -->
+        <div class="role-options">
+          <div class="role-option">
+            <input type="radio" id="admin" name="role" value="admin" required />
+            <label for="admin">Admin</label>
+          </div>
+          <div class="role-option">
+            <input type="radio" id="customer" name="role" value="customer" />
+            <label for="customer">Customer</label>
+          </div>
+        </div>
+
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required />
+
+        <button type="submit" class="login-button">Login</button>
+        <p class="register-link">Don't have an account? <a href="register.html">Register</a></p>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Handle login submit
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const role = document.querySelector('input[name="role"]:checked').value;
+
+      if (role === 'admin') {
+        window.location.href = "admin-dashboard.html";
+      } else if (role === 'customer') {
+        window.location.href = "booking.html";
+      }
+    });
+  </script>
+</body>
+</html>

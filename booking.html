@@ -1,0 +1,754 @@
+booking.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Serenity Spa</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="booking-container">
+        <header>
+            <h1>Book Your Appointment</h1>
+        </header>
+        <form id="booking-form">
+            <div class="booking-type">
+                <label>Booking Type:</label>
+                <div class="booking-options">
+                    <label class="radio-label">
+                        <input type="radio" name="bookingType" value="individual" checked>
+                        Individual Booking
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="bookingType" value="group">
+                        Group Booking
+                    </label>
+                </div>
+            </div>
+
+            <div class="individual-booking">
+                <div class="service-selection">
+                    <label>Select Services:</label>
+                    <div class="service-options">
+                        <div class="service-item">
+                            <select class="individual-service" data-service="1">
+                                <option value="">Choose a service...</option>
+                                <option value="Swedish Massage">Swedish Massage</option>
+                                <option value="Deep Tissue Massage">Deep Tissue Massage</option>
+                                <option value="Facial Treatment">Facial Treatment</option>
+                                <option value="Manicure">Manicure</option>
+                                <option value="Pedicure">Pedicure</option>
+                                <option value="Full Body Treatment">Full Body Treatment</option>
+                            </select>
+                            <select class="individual-duration" data-service="1">
+                                <option value="">Select duration...</option>
+                            </select>
+                            <button type="button" class="remove-service" style="display: none;">×</button>
+                        </div>
+                    </div>
+                    <button type="button" class="add-service">+ Add Another Service</button>
+                </div>
+            </div>
+
+            <div class="group-booking" style="display: none;">
+                <div class="group-size">
+                    <label for="groupSize">Number of People:</label>
+                    <select id="groupSize" name="groupSize">
+                        <option value="2">2 People</option>
+                        <option value="3">3 People</option>
+                        <option value="4">4 People</option>
+                        <option value="5">5 People</option>
+                        <option value="6">6 People</option>
+                    </select>
+                    <p class="group-info">Group bookings receive a 10% discount per person!</p>
+                </div>
+
+                <div class="group-services">
+                    <h3>Select Services for Each Person</h3>
+                    <div id="group-service-selections">
+                    </div>
+                </div>
+            </div>
+
+            <div class="staff-assignment">
+                <label>Assigned Specialist(s):</label>
+                <div id="assigned-staff" class="staff-info">
+                    Please select a service to see your assigned specialist(s)
+                </div>
+            </div>
+
+            <div class="appointment-details">
+                <label for="appointment-date-time">Select Date & Time:</label>
+                <input type="datetime-local" id="appointment-date-time" name="appointment-date-time" required>
+            </div>
+
+\            <div class="price-display">
+                <label>Estimated Total:</label>
+                <div id="price-info" class="price-info">
+                    Please select a service and duration to see the price
+                </div>
+            </div>
+
+            <button type="submit" id="confirm-booking">Confirm Appointment</button>
+        </form>
+    </div>
+
+    <script>
+      const serviceDurations = {
+            'Swedish Massage': [30, 60, 90],
+            'Deep Tissue Massage': [60, 90],
+            'Facial Treatment': [60, 90],
+            'Manicure': [45, 60],
+            'Pedicure': [60, 90],
+            'Full Body Treatment': [120]
+        };
+
+        const servicePrices = {
+            'Swedish Massage': 150,
+            'Deep Tissue Massage': 180,
+            'Facial Treatment': 200,
+            'Manicure': 120,
+            'Pedicure': 150,
+            'Full Body Treatment': 250
+        };
+
+        const staffAssignments = {
+            'Swedish Massage': ['Alice - Massage Specialist', 'David - Massage Specialist'],
+            'Deep Tissue Massage': ['Alice - Massage Specialist', 'David - Massage Specialist'],
+            'Facial Treatment': ['Bob - Facial Expert', 'Eve - Facial Expert'],
+            'Manicure': ['Charlie - Nail Care Specialist', 'Frank - Nail Care Specialist'],
+            'Pedicure': ['Charlie - Nail Care Specialist', 'Frank - Nail Care Specialist'],
+            'Full Body Treatment': ['Alice - Massage Specialist', 'David - Massage Specialist']
+        };
+
+        const staffAvailability = {
+            'Alice - Massage Specialist': { maxBookings: 4, currentBookings: 0 },
+            'David - Massage Specialist': { maxBookings: 4, currentBookings: 0 },
+            'Bob - Facial Expert': { maxBookings: 3, currentBookings: 0 },
+            'Eve - Facial Expert': { maxBookings: 3, currentBookings: 0 },
+            'Charlie - Nail Care Specialist': { maxBookings: 5, currentBookings: 0 },
+            'Frank - Nail Care Specialist': { maxBookings: 5, currentBookings: 0 }
+        };
+
+        function checkStaffAvailability(service, duration) {
+            const availableStaff = staffAssignments[service].filter(staff => {
+                const staffInfo = staffAvailability[staff];
+                return staffInfo.currentBookings < staffInfo.maxBookings;
+            });
+
+            if (availableStaff.length === 0) {
+                return {
+                    available: false,
+                    message: `Sorry, all specialists for ${service} are currently fully booked. Please try a different service or time.`
+                };
+            }
+
+            return {
+                available: true,
+                staff: availableStaff
+            };
+        }
+
+
+        document.querySelectorAll('input[name="bookingType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const individualBooking = document.querySelector('.individual-booking');
+                const groupBooking = document.querySelector('.group-booking');
+                
+                if (this.value === 'group') {
+                    individualBooking.style.display = 'none';
+                    groupBooking.style.display = 'block';
+                } else {
+                    individualBooking.style.display = 'block';
+                    groupBooking.style.display = 'none';
+                }
+                
+                updateGroupServiceSelections();
+                updateStaffAssignment();
+                updatePrice();
+            });
+        });
+
+        function getAvailableServices(container, currentSelect) {
+            const selectedServices = new Set();
+            container.querySelectorAll('select').forEach(select => {
+                if (select !== currentSelect && select.value) {
+                    selectedServices.add(select.value);
+                }
+            });
+
+            return Object.keys(serviceDurations).filter(service => !selectedServices.has(service));
+        }
+
+        function updateServiceOptions(select, availableServices) {
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Choose a service...</option>';
+            
+            availableServices.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service;
+                option.textContent = service;
+                select.appendChild(option);
+            });
+
+            if (currentValue && availableServices.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        document.querySelector('.individual-booking .add-service').addEventListener('click', function() {
+            const serviceOptions = this.previousElementSibling;
+            const serviceCount = serviceOptions.children.length + 1;
+            
+            const newServiceItem = document.createElement('div');
+            newServiceItem.className = 'service-item';
+            newServiceItem.innerHTML = `
+                <select class="individual-service" data-service="${serviceCount}">
+                    <option value="">Choose a service...</option>
+                    ${getAvailableServices(serviceOptions, null).map(service => 
+                        `<option value="${service}">${service}</option>`
+                    ).join('')}
+                </select>
+                <select class="individual-duration" data-service="${serviceCount}">
+                    <option value="">Select duration...</option>
+                </select>
+                <button type="button" class="remove-service">×</button>
+            `;
+            
+            serviceOptions.appendChild(newServiceItem);
+            
+            if (serviceCount > 1) {
+                serviceOptions.querySelectorAll('.remove-service').forEach(btn => {
+                    btn.style.display = 'inline-block';
+                });
+            }
+
+            const newServiceSelect = newServiceItem.querySelector('.individual-service');
+            const newDurationSelect = newServiceItem.querySelector('.individual-duration');
+            const removeBtn = newServiceItem.querySelector('.remove-service');
+
+            newServiceSelect.addEventListener('change', function() {
+                updateIndividualDuration(this);
+                updateStaffAssignment();
+                updatePrice();
+                
+                handleFullBodyTreatment(this, this.closest('.service-options'));
+                
+                const container = this.closest('.service-options');
+                container.querySelectorAll('.individual-service').forEach(select => {
+                    if (select !== this) {
+                        updateServiceOptions(select, getAvailableServices(container, select));
+                    }
+                });
+            });
+
+            newDurationSelect.addEventListener('change', updatePrice);
+
+            removeBtn.addEventListener('click', function() {
+                newServiceItem.remove();
+                updateStaffAssignment();
+                updatePrice();
+                
+                const container = this.closest('.service-options');
+                container.querySelectorAll('.individual-service').forEach(select => {
+                    updateServiceOptions(select, getAvailableServices(container, select));
+                });
+                
+                if (serviceOptions.children.length === 1) {
+                    serviceOptions.querySelector('.remove-service').style.display = 'none';
+                }
+            });
+        });
+
+        function updateIndividualDuration(serviceSelect) {
+            const durationSelect = serviceSelect.parentElement.querySelector('.individual-duration');
+            const selectedService = serviceSelect.value;
+            
+            durationSelect.innerHTML = '<option value="">Select duration...</option>';
+            
+            if (selectedService && serviceDurations[selectedService]) {
+                serviceDurations[selectedService].forEach(duration => {
+                    const option = document.createElement('option');
+                    option.value = duration;
+                    option.textContent = `${duration} minutes`;
+                    durationSelect.appendChild(option);
+                });
+            }
+        }
+
+        document.querySelectorAll('.individual-service').forEach(select => {
+            select.addEventListener('change', function() {
+                updateIndividualDuration(this);
+                updateStaffAssignment();
+                updatePrice();
+                
+                handleFullBodyTreatment(this, this.closest('.service-options'));
+                
+                const container = this.closest('.service-options');
+                container.querySelectorAll('.individual-service').forEach(select => {
+                    if (select !== this) {
+                        updateServiceOptions(select, getAvailableServices(container, select));
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll('.individual-duration').forEach(select => {
+            select.addEventListener('change', function() {
+                updatePrice();
+                updateStaffAssignment();
+            });
+        });
+
+        function handleFullBodyTreatment(select, container) {
+            const isFullBody = select.value === 'Full Body Treatment';
+            const personContainer = select.closest('.person-service-selection') || select.closest('.individual-booking');
+            const addButton = personContainer.querySelector('.add-service');
+            
+            if (isFullBody) {
+                const serviceItems = personContainer.querySelectorAll('.service-item');
+                serviceItems.forEach(item => {
+                    if (item !== select.closest('.service-item')) {
+                        item.remove();
+                    }
+                });
+                
+                if (addButton) {
+                    addButton.style.display = 'none';
+                }
+            } else {
+                if (addButton) {
+                    addButton.style.display = 'block';
+                }
+            }
+        }
+
+        function updateGroupServiceSelections() {
+            const groupServicesDiv = document.getElementById('group-service-selections');
+            const isGroupBooking = document.querySelector('input[name="bookingType"]:checked').value === 'group';
+            const groupSize = isGroupBooking ? parseInt(document.getElementById('groupSize').value) : 1;
+
+            if (isGroupBooking) {
+                groupServicesDiv.innerHTML = '';
+                for (let i = 0; i < groupSize; i++) {
+                    const personDiv = document.createElement('div');
+                    personDiv.className = 'person-service-selection';
+                    personDiv.innerHTML = `
+                        <h4>Person ${i + 1}</h4>
+                        <div class="service-options">
+                            <div class="service-item">
+                                <select class="person-service" data-person="${i}" data-service="1">
+                                    <option value="">Select a service...</option>
+                                    ${Object.keys(serviceDurations).map(service => 
+                                        `<option value="${service}">${service}</option>`
+                                    ).join('')}
+                                </select>
+                                <select class="person-duration" data-person="${i}" data-service="1">
+                                    <option value="">Select duration...</option>
+                                </select>
+                                <button type="button" class="remove-service" style="display: none;">×</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-service">+ Add Another Service</button>
+                    `;
+                    groupServicesDiv.appendChild(personDiv);
+
+                    const serviceSelect = personDiv.querySelector('.person-service');
+                    const durationSelect = personDiv.querySelector('.person-duration');
+                    const addServiceBtn = personDiv.querySelector('.add-service');
+
+                    serviceSelect.addEventListener('change', function() {
+                        updatePersonDuration(this);
+                        updateStaffAssignment();
+                        updatePrice();
+                        
+                        handleFullBodyTreatment(this, this.closest('.service-options'));
+                        
+                        const container = this.closest('.service-options');
+                        container.querySelectorAll('.person-service').forEach(select => {
+                            if (select !== this) {
+                                updateServiceOptions(select, getAvailableServices(container, select));
+                            }
+                        });
+                    });
+
+                    durationSelect.addEventListener('change', updatePrice);
+
+                    addServiceBtn.addEventListener('click', function() {
+                        const serviceOptions = this.previousElementSibling;
+                        const serviceCount = serviceOptions.children.length + 1;
+                        
+                        const newServiceItem = document.createElement('div');
+                        newServiceItem.className = 'service-item';
+                        newServiceItem.innerHTML = `
+                            <select class="person-service" data-person="${i}" data-service="${serviceCount}">
+                                <option value="">Select a service...</option>
+                                ${getAvailableServices(serviceOptions, null).map(service => 
+                                    `<option value="${service}">${service}</option>`
+                                ).join('')}
+                            </select>
+                            <select class="person-duration" data-person="${i}" data-service="${serviceCount}">
+                                <option value="">Select duration...</option>
+                            </select>
+                            <button type="button" class="remove-service">×</button>
+                        `;
+                        
+                        serviceOptions.appendChild(newServiceItem);
+                        
+                        if (serviceCount > 1) {
+                            serviceOptions.querySelectorAll('.remove-service').forEach(btn => {
+                                btn.style.display = 'inline-block';
+                            });
+                        }
+
+                        const newServiceSelect = newServiceItem.querySelector('.person-service');
+                        const newDurationSelect = newServiceItem.querySelector('.person-duration');
+                        const removeBtn = newServiceItem.querySelector('.remove-service');
+
+                        newServiceSelect.addEventListener('change', function() {
+                            updatePersonDuration(this);
+                            updateStaffAssignment();
+                            updatePrice();
+                            
+                            handleFullBodyTreatment(this, serviceOptions);
+                            
+                            const container = this.closest('.service-options');
+                            container.querySelectorAll('.person-service').forEach(select => {
+                                if (select !== this) {
+                                    updateServiceOptions(select, getAvailableServices(container, select));
+                                }
+                            });
+                        });
+
+                        newDurationSelect.addEventListener('change', updatePrice);
+
+                        removeBtn.addEventListener('click', function() {
+                            newServiceItem.remove();
+                            updateStaffAssignment();
+                            updatePrice();
+                            
+                            const container = this.closest('.service-options');
+                            container.querySelectorAll('.person-service').forEach(select => {
+                                updateServiceOptions(select, getAvailableServices(container, select));
+                            });
+                            
+                            if (serviceOptions.children.length === 1) {
+                                serviceOptions.querySelector('.remove-service').style.display = 'none';
+                            }
+                        });
+                    });
+                }
+            }
+        }
+
+        function updatePersonDuration(serviceSelect) {
+            const durationSelect = serviceSelect.parentElement.querySelector('.person-duration');
+            const selectedService = serviceSelect.value;
+            
+            durationSelect.innerHTML = '';
+            
+            if (selectedService && serviceDurations[selectedService]) {
+                serviceDurations[selectedService].forEach(duration => {
+                    const option = document.createElement('option');
+                    option.value = duration;
+                    option.textContent = `${duration} minutes`;
+                    durationSelect.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Select duration...';
+                durationSelect.appendChild(option);
+            }
+        }
+
+        function updateStaffAssignment() {
+            const staffDisplay = document.getElementById('assigned-staff');
+            const isGroupBooking = document.querySelector('input[name="bookingType"]:checked').value === 'group';
+            
+            if (isGroupBooking) {
+                const assignedStaff = new Set();
+                let availabilityIssues = [];
+                
+                document.querySelectorAll('.person-service').forEach(select => {
+                    if (select.value) {
+                        const duration = select.parentElement.querySelector('.person-duration').value;
+                        const availability = checkStaffAvailability(select.value, duration);
+                        
+                        if (!availability.available) {
+                            availabilityIssues.push(availability.message);
+                        } else {
+                            availability.staff.forEach(staff => assignedStaff.add(staff));
+                        }
+                    }
+                });
+
+                if (availabilityIssues.length > 0) {
+                    staffDisplay.innerHTML = `
+                        <div class="availability-warning">
+                            ${availabilityIssues.join('<br>')}
+                        </div>
+                    `;
+                    staffDisplay.style.color = '#ff0000';
+                } else {
+                    staffDisplay.innerHTML = Array.from(assignedStaff).map(staff => 
+                        `<div class="staff-member">
+                            ${staff} (${staffAvailability[staff].currentBookings}/${staffAvailability[staff].maxBookings} bookings)
+                        </div>`
+                    ).join('');
+                    staffDisplay.style.color = '#8b5c5c';
+                }
+            } else {
+                const assignedStaff = new Set();
+                let availabilityIssues = [];
+                
+                document.querySelectorAll('.individual-service').forEach(select => {
+                    if (select.value) {
+                        const duration = select.parentElement.querySelector('.individual-duration').value;
+                        const availability = checkStaffAvailability(select.value, duration);
+                        
+                        if (!availability.available) {
+                            availabilityIssues.push(availability.message);
+                        } else {
+                            availability.staff.forEach(staff => assignedStaff.add(staff));
+                        }
+                    }
+                });
+
+                if (availabilityIssues.length > 0) {
+                    staffDisplay.innerHTML = `
+                        <div class="availability-warning">
+                            ${availabilityIssues.join('<br>')}
+                        </div>
+                    `;
+                    staffDisplay.style.color = '#ff0000';
+                } else {
+                    staffDisplay.innerHTML = Array.from(assignedStaff).map(staff => 
+                        `<div class="staff-member">
+                            ${staff} (${staffAvailability[staff].currentBookings}/${staffAvailability[staff].maxBookings} bookings)
+                        </div>`
+                    ).join('');
+                    staffDisplay.style.color = '#8b5c5c';
+                }
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .availability-warning {
+                color: #ff0000;
+                padding: 10px;
+                background-color: #fff0f0;
+                border: 1px solid #ff0000;
+                border-radius: 4px;
+                margin: 10px 0;
+            }
+            .staff-member {
+                margin: 5px 0;
+                padding: 5px;
+                background-color: #f5f5f5;
+                border-radius: 4px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        function updatePrice() {
+            const priceDisplay = document.getElementById('price-info');
+            const isGroupBooking = document.querySelector('input[name="bookingType"]:checked').value === 'group';
+            
+            if (isGroupBooking) {
+                let totalPrice = 0;
+                let serviceBreakdown = [];
+                
+                document.querySelectorAll('.person-service-selection').forEach((div, personIndex) => {
+                    const serviceItems = div.querySelectorAll('.service-item');
+                    serviceItems.forEach((item, serviceIndex) => {
+                        const serviceSelect = item.querySelector('.person-service');
+                        const durationSelect = item.querySelector('.person-duration');
+                        
+                        if (serviceSelect.value && durationSelect.value) {
+                            const servicePrice = servicePrices[serviceSelect.value] * (durationSelect.value / 60);
+                            totalPrice += servicePrice;
+                            serviceBreakdown.push({
+                                person: personIndex + 1,
+                                service: serviceSelect.value,
+                                duration: durationSelect.value,
+                                price: servicePrice
+                            });
+                        }
+                    });
+                });
+
+                if (serviceBreakdown.length > 0) {
+                    const groupDiscount = totalPrice * 0.1;
+                    const finalPrice = totalPrice - groupDiscount;
+                    
+                    priceDisplay.innerHTML = `
+                        <div class="price-breakdown">
+                            ${serviceBreakdown.map(item => `
+                                <div class="service-item">
+                                    <div>Person ${item.person}: ${item.service} (${item.duration} mins)</div>
+                                    <div>₱${item.price.toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                            <div class="subtotal">Subtotal: ₱${totalPrice.toFixed(2)}</div>
+                            <div class="discount">Group Discount (10%): -₱${groupDiscount.toFixed(2)}</div>
+                            <div class="total-price">Total: ₱${finalPrice.toFixed(2)}</div>
+                        </div>
+                    `;
+                } else {
+                    priceDisplay.textContent = 'Please select services for all group members';
+                }
+            } else {
+                let totalPrice = 0;
+                let serviceBreakdown = [];
+                
+                document.querySelectorAll('.individual-booking .service-item').forEach(item => {
+                    const serviceSelect = item.querySelector('.individual-service');
+                    const durationSelect = item.querySelector('.individual-duration');
+                    
+                    if (serviceSelect.value && durationSelect.value) {
+                        const servicePrice = servicePrices[serviceSelect.value] * (durationSelect.value / 60);
+                        totalPrice += servicePrice;
+                        serviceBreakdown.push({
+                            service: serviceSelect.value,
+                            duration: durationSelect.value,
+                            price: servicePrice
+                        });
+                    }
+                });
+
+                if (serviceBreakdown.length > 0) {
+                    priceDisplay.innerHTML = `
+                        <div class="price-breakdown">
+                            ${serviceBreakdown.map(item => `
+                                <div class="service-item">
+                                    <div>${item.service} (${item.duration} mins)</div>
+                                    <div>₱${item.price.toFixed(2)}</div>
+                                </div>
+                            `).join('')}
+                            <div class="total-price">Total: ₱${totalPrice.toFixed(2)}</div>
+                        </div>
+                    `;
+                } else {
+                    priceDisplay.textContent = 'Please select at least one service and duration';
+                }
+            }
+        }
+
+        document.getElementById("booking-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const isGroupBooking = document.querySelector('input[name="bookingType"]:checked').value === 'group';
+            const dateTime = document.getElementById("appointment-date-time").value;
+
+            if (!dateTime) {
+                alert("Please select a date and time");
+                return;
+            }
+
+            let availabilityIssues = [];
+            
+            if (isGroupBooking) {
+                document.querySelectorAll('.person-service').forEach(select => {
+                    if (select.value) {
+                        const duration = select.parentElement.querySelector('.person-duration').value;
+                        const availability = checkStaffAvailability(select.value, duration);
+                        if (!availability.available) {
+                            availabilityIssues.push(availability.message);
+                        }
+                    }
+                });
+            } else {
+                document.querySelectorAll('.individual-service').forEach(select => {
+                    if (select.value) {
+                        const duration = select.parentElement.querySelector('.individual-duration').value;
+                        const availability = checkStaffAvailability(select.value, duration);
+                        if (!availability.available) {
+                            availabilityIssues.push(availability.message);
+                        }
+                    }
+                });
+            }
+
+            if (availabilityIssues.length > 0) {
+                alert(availabilityIssues.join('\n'));
+                return;
+            }
+
+            const totalPrice = document.querySelector('.total-price').textContent.split('₱')[1];
+
+            if (isGroupBooking) {
+                const groupServices = [];
+                document.querySelectorAll('.person-service-selection').forEach((div, personIndex) => {
+                    const serviceItems = div.querySelectorAll('.service-item');
+                    serviceItems.forEach(item => {
+                        const service = item.querySelector('.person-service').value;
+                        const duration = item.querySelector('.person-duration').value;
+                        if (service && duration) {
+                            groupServices.push({
+                                person: personIndex + 1,
+                                service: service,
+                                duration: duration
+                            });
+                        }
+                    });
+                });
+
+                if (groupServices.length === 0) {
+                    alert("Please select services for at least one person");
+                    return;
+                }
+
+                const bookingDetails = {
+                    type: "group",
+                    services: groupServices,
+                    date: dateTime.split('T')[0],
+                    time: dateTime.split('T')[1],
+                    total: totalPrice,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+
+                const pendingBookings = JSON.parse(localStorage.getItem('pendingBookings')) || [];
+                pendingBookings.push(bookingDetails);
+                localStorage.setItem('pendingBookings', JSON.stringify(pendingBookings));
+            } else {
+                const individualServices = [];
+                document.querySelectorAll('.individual-booking .service-item').forEach(item => {
+                    const service = item.querySelector('.individual-service').value;
+                    const duration = item.querySelector('.individual-duration').value;
+                    if (service && duration) {
+                        individualServices.push({
+                            service: service,
+                            duration: duration
+                        });
+                    }
+                });
+
+                if (individualServices.length === 0) {
+                    alert("Please select at least one service");
+                    return;
+                }
+
+                const bookingDetails = {
+                    type: "individual",
+                    services: individualServices,
+                    date: dateTime.split('T')[0],
+                    time: dateTime.split('T')[1],
+                    total: totalPrice,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+
+                const pendingBookings = JSON.parse(localStorage.getItem('pendingBookings')) || [];
+                pendingBookings.push(bookingDetails);
+                localStorage.setItem('pendingBookings', JSON.stringify(pendingBookings));
+            }
+
+            window.location.href = 'pending-confirmation.html';
+        });
+    </script>
+</body>
+</html>

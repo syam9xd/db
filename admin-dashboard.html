@@ -1,0 +1,117 @@
+admin-dashboard.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Serenity Spa</title>
+    <link rel="stylesheet" href="admin-dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <header class="admin-header">
+            <h1>Serenity Spa Admin</h1>
+            <div class="admin-profile">
+                <img src="images/admin.jpg" alt="Admin">
+                <span>Admin</span>
+            </div>
+        </header>
+
+        <main class="admin-main">
+            <section class="dashboard-stats">
+                <div class="stat-card">
+                    <i class="fas fa-calendar-check"></i>
+                    <div class="stat-info">
+                        <h3>Today's Appointments</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-info">
+                        <h3>Total Staff</h3>
+                        <p class="stat-number">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="appointments">
+                <div class="section-header">
+                    <h2>Appointments</h2>
+                    <div class="section-actions">
+                        <select id="filter-status">
+                            <option value="all">All Status</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                        <button class="btn-primary" onclick="addAppointment()">
+                            <i class="fas fa-plus"></i> New
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Service</th>
+                                <th>Staff</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Customer Choice</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointments-list">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="staff-section">
+                <h2>Staff Management</h2>
+                <div class="staff-grid">
+                    <div class="staff-list">
+                        <h3>Staff Status</h3>
+                        <div id="staff-status-list">
+                            <!-- Staff status will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="staff-schedule">
+                        <h3>Update Schedule</h3>
+                        <form class="staff-form">
+                            <div class="form-group">
+                                <label for="staff-select">Select Staff:</label>
+                                <select id="staff-select" required>
+                                    <option value="">Choose staff member</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Working Hours:</label>
+                                <div class="time-inputs">
+                                    <input type="time" name="start-time" required>
+                                    <span>to</span>
+                                    <input type="time" name="end-time" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Status:</label>
+                                <select name="staff-status" required>
+                                    <option value="available">Available</option>
+                                    <option value="busy">Busy</option>
+                                    <option value="break">On Break</option>
+                                    <option value="off">Off Duty</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn-primary">Update Status</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin-dashboard.js"></script>
+</body>
+</html>
